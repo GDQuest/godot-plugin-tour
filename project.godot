@@ -20,4 +20,8 @@ export/convert_text_resources_to_binary=true
 
 [editor_plugins]
 
-enabled=PackedStringArray("res://addons/zylann.editor_debugger/plugin.cfg", "res://addons/tour/plugin.cfg")
+enabled=PackedStringArray("res://addons/tour/plugin.cfg")
+
+[filesystem]
+
+import/blender/enabled=false
