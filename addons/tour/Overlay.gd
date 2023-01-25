@@ -8,9 +8,6 @@ var stylebox: StyleBox = null:
 		return get("theme_override_styles/panel")
 
 
-var target: Node = null
-
-
 func _init() -> void:
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
 

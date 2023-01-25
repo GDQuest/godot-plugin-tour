@@ -1,3 +1,4 @@
+@tool
 extends Node
 
 
@@ -298,7 +299,16 @@ const style_box_block = preload("style_box_block.tres")
 	"history_dock": history_dock, 
 }
 
+###############################################################################
+#
+# DEBUG HELPERS
+#
+# For developing this plugin
+#
+
 var debug_helper := preload("DebugHelper.gd").new()
+var debug_window: Window
+
 
 ## Checks that all the basic elements are there
 func _on_ready_verify_integrity() -> bool:
@@ -309,26 +319,62 @@ func _on_ready_verify_integrity() -> bool:
 	if not debug_helper.is_debug_mode:
 		return true
 
-	var debug_window := preload("DebugWindow.tscn").instantiate()
+	debug_window = preload("DebugWindow.tscn").instantiate()
+	debug_window.theme = get_tree().root.theme
+	debug_window.visible = false
 	# This is necessary to access editor icons
 	# TODO: maybe there's a way to access the default theme from children windows?
-	debug_window.theme = get_tree().root.theme
+	debug_window.close_requested.connect(debug_window.hide)
 	add_child(debug_window)
 
-	prints(debug_window, debug_window.get_script())
+	debug_window.elements_of_note.remove_highlights_requested.connect(clean_all_highlights)
+	debug_window.elements_of_note.remove_blocks_requested.connect(clean_all_blocks)
+	debug_window.elements_of_note.add_action({
+		name = "block",
+		tooltip = "toggle block",
+		icon_on = "StyleBoxGridVisible",
+		icon_off = "StyleBoxGridInvisible",
+		action = toggle_overlay_block
+	})
+	debug_window.elements_of_note.add_action({
+		name = "funnel",
+		tooltip = "block everything except this",
+		icon = "AnimationFilter",
+		is_toggle = false,
+		action = toggle_funnel
+	})
+	debug_window.elements_of_note.add_action({
+		name = "highlight",
+		tooltip = "toggle highlight",
+		icon_on = "GuiRadioChecked",
+		icon_off = "GuiRadioUnchecked",
+		action = toggle_overlay_highlight
+	})
+	debug_window.elements_of_note.add_action({
+		name = "visible",
+		tooltip = "toggle visibility",
+		icon_on = "GuiVisibilityVisible",
+		icon_off = "GuiVisibilityHidden",
+		action = _toggle_element_visibility
+	})
 
 	var all_found := true
-	#for name in get_tree().root.theme.get_icon_list("EditorIcons"):
-	#	buttons_container.add_child(make_button(name, name))
 	for key in _elements:
 		var element: Node = _elements[key]
 		if element == null:
 			push_error("%s was not found"%[key])
 			all_found = false
 		else:
-			debug_window.add_element(key, element, toggle_overlay_highlight.bind(element))
+			debug_window.elements_of_note.add_element(key, element)
 	return all_found
 
+
+func _input(event: InputEvent) -> void:
+	if debug_helper.is_debug_mode \
+		and event is InputEventKey \
+		and event.pressed \
+		and event.keycode == KEY_F9:
+			debug_window.visible = not debug_window.visible
 
 
 ###############################################################################
@@ -339,7 +385,8 @@ func _on_ready_verify_integrity() -> bool:
 
 ## Will hold all overlays
 var overlays_layer: Control
-
+var _overlays_highlights_cache := {}
+var _overlays_blocks_cache := {}
 
 ## Add the overlay layer
 ## TODO: make sure the overlay is always on top?
@@ -363,13 +410,12 @@ func _on_exit_remove_overlays_layer() -> void:
 ## @param node the node to create an overlay over
 ## @param style_box the style of the overlay
 ## @returns {Overlay | null}
-func add_overlay(node: Node, style_box: StyleBox) -> Overlay:
+func _add_overlay(node: Node, style_box: StyleBox) -> Overlay:
 	var control: Control = find(node, func (node: Node) -> bool: return node is Control)
 	if control == null:
 		return null
 	var panel := Overlay.new()
 	panel.stylebox = style_box
-	panel.target = node
 	panel.fit_control(control)
 	overlays_layer.add_child(panel)
 	return panel
@@ -379,13 +425,38 @@ func add_overlay(node: Node, style_box: StyleBox) -> Overlay:
 func clean_overlays() -> void:
 	for child in overlays_layer.get_children():
 		child.queue_free()
+	_overlays_highlights_cache = {}
+	_overlays_blocks_cache = {}
 
 
-## Removes the overlays of a specific node you were highlighting or blocking
-func clean_overlays_of(target: Node) -> void:
-	for child in overlays_layer.get_children():
-		if child is Overlay and child.target == target:
-			child.queue_free()
+## Removes the highlights overlays of a specific node you were highlighting
+func clean_highlight_of(target: Node) -> void:
+	if not _overlays_highlights_cache.has(target):
+		return
+	(_overlays_highlights_cache[target] as Overlay).queue_free()
+	_overlays_highlights_cache.erase(target)
+
+
+# Removes all highlights from the editor
+func clean_all_highlights() -> void:
+	for child in _overlays_highlights_cache.values():
+		child.queue_free()
+	_overlays_highlights_cache = {}
+
+
+## Removes the block overlays of a specific node you were blocking
+func clean_blocks_of(target: Node) -> void:
+	if not _overlays_blocks_cache.has(target):
+		return
+	(_overlays_blocks_cache[target] as Overlay).queue_free()
+	_overlays_blocks_cache.erase(target)
+
+
+# Removes all blocks from the editor
+func clean_all_blocks() -> void:
+	for child in _overlays_blocks_cache.values():
+		child.queue_free()
+	_overlays_blocks_cache = {}
 
 
 ## Highlights an element.
@@ -399,7 +470,11 @@ func clean_overlays_of(target: Node) -> void:
 ## @param delay if this valud is above 0 and if fade is also above 0, the highlighter
 ##              will delay fading out over that many seconds.
 func add_overlay_highlight(node: Node, fade := 0.0, delay:= 0.0) -> void:
-	var panel := add_overlay(node, style_box_highlight)
+	if _overlays_highlights_cache.has(node):
+		return
+	var panel := _add_overlay(node, style_box_highlight)
+	if panel:
+		_overlays_highlights_cache[node] = panel
 	if panel and fade > 0:
 		var tween := create_tween()\
 			.set_trans(Tween.TRANS_EXPO)\
@@ -410,13 +485,47 @@ func add_overlay_highlight(node: Node, fade := 0.0, delay:= 0.0) -> void:
 		tween.tween_callback(panel.queue_free)
 
 
-## Toggles an overlay of or on. Mostly used in debug functions, to make sure the proper
+## Toggles an overlay off or on. Mostly used in debug functions, to make sure the proper
 ## nodes are targeted.
-func toggle_overlay_highlight(toggled: bool, node: Node) -> void:
-	if toggled:
-		add_overlay_highlight(node)
+## returns a boolean that represents if the overlay is on or off
+func toggle_overlay_highlight(node: Node) -> bool:
+	if _overlays_highlights_cache.has(node):
+		clean_highlight_of(node)
+		return false
 	else:
-		clean_overlays_of(node)
+		add_overlay_highlight(node)
+		return true
+
+
+## Toggles a block off or on. Mostly used in debug functions, to make sure the proper
+## nodes are targeted.
+## returns a boolean that represents if the overlay is on or off
+func toggle_overlay_block(node: Node) -> bool:
+	if _overlays_blocks_cache.has(node):
+		clean_blocks_of(node)
+		return false
+	else:
+		add_overlay_block(node)
+		return true
+
+
+func toggle_funnel(node: Node) -> bool:
+	if _overlays_blocks_cache.has(node):
+		clean_all_blocks()
+		return false
+	else:
+		add_overlays_block_all_except(node)
+		return true
+
+
+## Toggles an element from visible to invisible.
+## Returns a boolean that represents if the element is visible or invisible
+func _toggle_element_visibility(element: Node) -> bool:
+	if not ('visible' in element):
+		return true
+	element.visible = not element.visible
+	return element.visible
+
 
 ## Blocks an Element
 ## If the element is not a control, will attempt to find the closest control node.
@@ -424,7 +533,11 @@ func toggle_overlay_highlight(toggled: bool, node: Node) -> void:
 ## ---
 ## @param node the node to block
 func add_overlay_block(node: Node) -> void:
-	var panel := add_overlay(node, style_box_block)
+	if _overlays_blocks_cache.has(node):
+		return 
+	var panel := _add_overlay(node, style_box_block)
+	if panel:
+		_overlays_blocks_cache[node] = panel
 
 
 ## Blocks all editor elements except the one specified.
@@ -476,8 +589,8 @@ static func find(target: Node, predicate: Callable, max_depth := 40) -> Control:
 
 
 func _ready() -> void:
-	_on_ready_verify_integrity()
 	_on_ready_add_overlays_layer()
+	_on_ready_verify_integrity()
 
 
 func _exit_tree() -> void:
