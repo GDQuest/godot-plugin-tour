@@ -1,0 +1,24 @@
+[gd_scene load_steps=2 format=3 uid="uid://bhxxeenhphk8b"]
+
+[ext_resource type="Script" path="res://addons/tour/DebugWindow.gd" id="1_ak7wm"]
+
+[node name="DebugWindow" type="Window"]
+initial_position = 1
+title = "Debug Window"
+size = Vector2i(400, 300)
+current_screen = -2
+wrap_controls = true
+transient = true
+script = ExtResource("1_ak7wm")
+
+[node name="ScrollContainer" type="ScrollContainer" parent="."]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="VBoxContainer" type="VBoxContainer" parent="ScrollContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3

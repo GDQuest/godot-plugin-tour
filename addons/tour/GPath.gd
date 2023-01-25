@@ -298,50 +298,7 @@ const style_box_block = preload("style_box_block.tres")
 	"history_dock": history_dock, 
 }
 
-###############################################################################
-#
-# DEBUG UTILITIES
-# 
-# Run godot with the custom command line argument --tour-debug:
-# ```
-# godot --editor . -- --tour-debug
-# ```
-# Then, show or hide the window with F9
-#
-
-var command_line_arguments := get_command_line_arguments()
-var is_debug_mode: bool = command_line_arguments.has("tour-debug") and command_line_arguments["tour-debug"] == true
-var debug_window: Window = null
-
-static func get_command_line_arguments() -> Dictionary:
-	var arguments := {}
-	for argument in OS.get_cmdline_user_args():
-		argument = argument.lstrip("--").to_lower()
-		if argument.find("=") > -1:
-			var arg_tuple := argument.split("=")
-			var key := arg_tuple[0]
-			var value := arg_tuple[1].strip_edges()
-			arguments[key] = value
-		else:
-			var key := argument
-			var value := true
-			if argument.begins_with("no-"):
-				value = false
-				key = argument.lstrip("no-")
-			arguments[key] = value
-	return arguments
-
-func _input(event: InputEvent) -> void:
-	if is_debug_mode and event is InputEventKey and event.pressed and event.keycode == KEY_F9:
-		print("hey!")
-		debug_window.visible = not debug_window.visible
-
-func _make_editor_button(icon: String, text := "", toggle_mode := true) -> Button:
-	var btn := Button.new()
-	btn.icon = get_tree().root.theme.get_icon(icon, "EditorIcons")
-	btn.toggle_mode = toggle_mode
-	btn.text = text
-	return btn
+var debug_helper := preload("DebugHelper.gd").new()
 
 ## Checks that all the basic elements are there
 func _on_ready_verify_integrity() -> bool:
@@ -349,54 +306,29 @@ func _on_ready_verify_integrity() -> bool:
 		printerr("This script is editor only")
 		return false
 	
-	if not is_debug_mode:
+	if not debug_helper.is_debug_mode:
 		return true
-	
-	debug_window = Window.new()
-	debug_window.size = Vector2i(1,1) * 300
-	#debug_window.always_on_top = true
-	debug_window.initial_position = Window.WINDOW_INITIAL_POSITION_CENTER_SCREEN
-	debug_window.transient = true
+
+	var debug_window := preload("DebugWindow.tscn").instantiate()
+	# This is necessary to access editor icons
+	# TODO: maybe there's a way to access the default theme from children windows?
+	debug_window.theme = get_tree().root.theme
 	add_child(debug_window)
 
-	var buttons_container := VBoxContainer.new()
-	buttons_container.anchor_bottom = 1
-	buttons_container.anchor_right = 1
-	
-	var buttons_container_scroller := ScrollContainer.new()
-	buttons_container_scroller.add_child(buttons_container)
-	buttons_container_scroller.anchor_bottom = 1
-	buttons_container_scroller.anchor_right = 1
-
-	debug_window.add_child(buttons_container_scroller)
+	prints(debug_window, debug_window.get_script())
 
 	var all_found := true
 	#for name in get_tree().root.theme.get_icon_list("EditorIcons"):
 	#	buttons_container.add_child(make_button(name, name))
-
 	for key in _elements:
 		var element: Node = _elements[key]
 		if element == null:
 			push_error("%s was not found"%[key])
 			all_found = false
 		else:
-			var row:= HBoxContainer.new()
-			
-			var label := Label.new()
-			label.text = "%s(%s#%s)"%[key, element.name, element.get_class()]
-			label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-			row.add_child(label)
-
-			var highlight_button: Button = _make_editor_button("GizmoLight", "", true)
-			highlight_button.toggled.connect(toggle_overlay_highlight.bind(element))
-			row.add_child(highlight_button)
-
-			var visible_button: Button = _make_editor_button("GuiVisibilityVisible", "", true)
-			visible_button.toggled.connect(func(): element.visible = not element.visible)
-			row.add_child(visible_button)
-
-			buttons_container.add_child(row)
+			debug_window.add_element(key, element, toggle_overlay_highlight.bind(element))
 	return all_found
+
 
 
 ###############################################################################
