@@ -1,0 +1,31 @@
+[gd_scene load_steps=2 format=3 uid="uid://b5bair4mspjvv"]
+
+[ext_resource type="Script" path="res://addons/tour/EditorIconsDebugScreen.gd" id="1_ydhqo"]
+
+[node name="EditorIconsHelper" type="VBoxContainer"]
+offset_right = 1152.0
+offset_bottom = 648.0
+size_flags_horizontal = 3
+size_flags_vertical = 3
+script = ExtResource("1_ydhqo")
+
+[node name="IconsSearchBar" type="LineEdit" parent="."]
+unique_name_in_owner = true
+layout_mode = 2
+placeholder_text = "Search here"
+
+[node name="HFlowContainer" type="HFlowContainer" parent="."]
+layout_mode = 2
+
+[node name="CopyFullCodeToggle" type="CheckButton" parent="HFlowContainer"]
+unique_name_in_owner = true
+layout_mode = 2
+tooltip_text = "If toggled, this will copy the full line to acquire an editor icon
+(like get_theme_icon(\"Node2D\", \"EditorIcons\")).
+Otherwise, will only copy the icon's string 
+(like \"Node2D\")"
+text = "copy code on press"
+
+[node name="IconsGrid" type="HFlowContainer" parent="."]
+unique_name_in_owner = true
+layout_mode = 2

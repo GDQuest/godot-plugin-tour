@@ -1,0 +1,31 @@
+[gd_scene load_steps=2 format=3 uid="uid://d2vgtclp62u50"]
+
+[ext_resource type="Script" path="res://addons/tour/ElementsOfNoteDebugScreen.gd" id="1_parfp"]
+
+[node name="ElementsOfNote" type="VBoxContainer"]
+offset_right = 1152.0
+offset_bottom = 648.0
+size_flags_horizontal = 3
+size_flags_vertical = 3
+script = ExtResource("1_parfp")
+
+[node name="HFlowContainer" type="HFlowContainer" parent="."]
+layout_mode = 2
+
+[node name="RemoveAllHighlights" type="Button" parent="HFlowContainer"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Remove highlights
+"
+
+[node name="RemoveAllBlocks" type="Button" parent="HFlowContainer"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Remove blocks"
+
+[node name="Tree" type="Tree" parent="."]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+hide_root = true

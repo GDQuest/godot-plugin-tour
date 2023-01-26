@@ -1,5 +1,5 @@
 @tool
-extends ScrollContainer
+extends Control
 
 const METADATA_NODE_REFERENCE := "METADATA_NODE_PATH"
 const ROW_BUTTON_DISABLE = 1000
@@ -77,6 +77,6 @@ class RowAction:
 		return icon
 
 	func run(node: Node) -> void:
-		var result: bool = action.call(node)
-		if is_toggle:
+		var result: Variant = action.call(node)
+		if is_toggle and result is bool:
 			icon = icon_on if (result == true and icon_on != "") else icon_off

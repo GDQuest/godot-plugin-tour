@@ -1,5 +1,5 @@
 @tool
-extends ScrollContainer
+extends Control
 
 @onready var _icons_grid: Control = %IconsGrid
 @onready var _icons_search_bar: LineEdit = %IconsSearchBar
