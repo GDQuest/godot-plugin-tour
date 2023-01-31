@@ -23,7 +23,25 @@ grow_vertical = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 
+[node name="EditorIcons" type="ScrollContainer" parent="TabContainer"]
+layout_mode = 2
+
+[node name="MarginContainer" type="MarginContainer" parent="TabContainer/EditorIcons"]
+custom_minimum_size = Vector2(200, 200)
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_constants/margin_left = 5
+theme_override_constants/margin_top = 5
+theme_override_constants/margin_right = 5
+theme_override_constants/margin_bottom = 5
+
+[node name="EditorIconsDebugScreen" parent="TabContainer/EditorIcons/MarginContainer" instance=ExtResource("2_8f66v")]
+unique_name_in_owner = true
+layout_mode = 2
+
 [node name="File System" type="ScrollContainer" parent="TabContainer"]
+visible = false
 layout_mode = 2
 
 [node name="MarginContainer" type="MarginContainer" parent="TabContainer/File System"]
@@ -54,22 +72,4 @@ theme_override_constants/margin_bottom = 5
 
 [node name="ElementsOfNoteDebugScreen" parent="TabContainer/Elements of Note/MarginContainer" instance=ExtResource("3_qkukv")]
 unique_name_in_owner = true
-layout_mode = 2
-
-[node name="EditorIcons" type="ScrollContainer" parent="TabContainer"]
-visible = false
-layout_mode = 2
-
-[node name="MarginContainer" type="MarginContainer" parent="TabContainer/EditorIcons"]
-layout_mode = 2
-size_flags_horizontal = 3
-size_flags_vertical = 3
-theme_override_constants/margin_left = 5
-theme_override_constants/margin_top = 5
-theme_override_constants/margin_right = 5
-theme_override_constants/margin_bottom = 5
-
-[node name="EditorIconsDebugScreen" parent="TabContainer/EditorIcons/MarginContainer" instance=ExtResource("2_8f66v")]
-unique_name_in_owner = true
-visible = false
 layout_mode = 2

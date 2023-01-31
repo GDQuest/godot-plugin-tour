@@ -20,8 +20,13 @@ export/convert_text_resources_to_binary=true
 
 [editor_plugins]
 
-enabled=PackedStringArray("res://addons/tour/plugin.cfg")
+enabled=PackedStringArray("res://addons/zylann.editor_debugger/plugin.cfg", "res://addons/tour/plugin.cfg")
 
 [filesystem]
 
 import/blender/enabled=false
+
+[plugins]
+
+tour/show_window=Object(InputEventKey,"resource_local_to_scene":false,"resource_name":"","device":0,"window_id":0,"alt_pressed":false,"shift_pressed":false,"ctrl_pressed":false,"meta_pressed":false,"pressed":true,"keycode":4194342,"physical_keycode":0,"unicode":0,"echo":false,"script":null)
+

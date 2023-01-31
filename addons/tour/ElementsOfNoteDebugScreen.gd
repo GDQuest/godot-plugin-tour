@@ -1,7 +1,7 @@
 @tool
 extends Control
 
-const METADATA_NODE_REFERENCE := "METADATA_NODE_PATH"
+const METADATA_NODE_REFERENCE := "METADATA_NODE_REFERENCE"
 const ROW_BUTTON_DISABLE = 1000
 
 signal remove_highlights_requested
@@ -13,6 +13,7 @@ signal remove_blocks_requested
 
 var _actions: Array[RowAction] = []
 var _tree_root: TreeItem
+
 
 func _ready() -> void:
 	_remove_all_highlights_button.pressed.connect(emit_signal.bind("remove_highlights_requested"))
@@ -40,6 +41,7 @@ func add_element(key: String, element: Node) -> void:
 	row.set_tooltip_text(0, "\n".join(['Tour name: "%s"'%[key], 'Node name: "%s'%[element.name], 'Class: %s'%[element.get_class()]]))
 	row.set_meta(METADATA_NODE_REFERENCE, element)
 	row.set_icon_max_width(0, 32)
+	
 	for id in _actions.size():
 		var action = _actions[id]
 		if action.name == "visible" and not ("visible" in element):

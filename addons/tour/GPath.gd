@@ -9,6 +9,14 @@ extends Node
 
 const GQuery = preload("GQuery.gd")
 
+###############################################################################
+#
+# SETTINGS
+#
+
+const Settings = preload("settings.gd")
+
+var show_debugger_window_shortcut := Settings.get_show_debugger_window_shortcut()
 
 ###############################################################################
 #
@@ -308,6 +316,7 @@ func _on_ready_setup_file_system_manager() -> void:
 	file_system_dock_manager.file_system_dock = file_system_dock
 	file_system_dock_manager.setup()
 
+
 ###############################################################################
 #
 # DEBUG HELPERS
@@ -331,13 +340,14 @@ func _on_ready_verify_integrity() -> bool:
 
 	debug_window = preload("DebugWindow.tscn").instantiate()
 	debug_window.theme = get_tree().root.theme
-	debug_window.visible = false
+	
 	# This is necessary to access editor icons
 	# TODO: maybe there's a way to access the default theme from children windows?
 	debug_window.close_requested.connect(debug_window.hide)
 	add_child(debug_window)
 
 	debug_window.file_system_dock.show_dock_requested.connect(file_system_dock_manager.show)
+	debug_window.file_system_dock.highlight_addons_requested.connect(_highlight_addon_file)
 
 	debug_window.elements_of_note.remove_highlights_requested.connect(highlights_layer.clean_all_overlays)
 	debug_window.elements_of_note.remove_blocks_requested.connect(blocks_layer.clean_all_overlays)
@@ -346,21 +356,21 @@ func _on_ready_verify_integrity() -> bool:
 		tooltip = "toggle block",
 		icon_on = "StyleBoxGridVisible",
 		icon_off = "StyleBoxGridInvisible",
-		action = blocks_layer.toggle_overlay_of
+		action = blocks_layer.toggle_overlay_of_node
 	})
 	debug_window.elements_of_note.add_action({
 		name = "funnel",
 		tooltip = "block everything except this",
 		icon = "AnimationFilter",
 		is_toggle = false,
-		action = blocks_layer.add_funnel.bind(_interactables_array)
+		action = blocks_layer.add_funnel_to_node.bind(_interactables_array)
 	})
 	debug_window.elements_of_note.add_action({
 		name = "highlight",
 		tooltip = "toggle highlight",
 		icon_on = "GuiRadioChecked",
 		icon_off = "GuiRadioUnchecked",
-		action = highlights_layer.toggle_overlay_of
+		action = highlights_layer.toggle_overlay_of_node
 	})
 	debug_window.elements_of_note.add_action({
 		name = "visible",
@@ -383,10 +393,9 @@ func _on_ready_verify_integrity() -> bool:
 
 func _input(event: InputEvent) -> void:
 	if debug_helper.is_debug_mode \
-		and event is InputEventKey \
-		and event.pressed \
-		and event.keycode == KEY_F9:
-			debug_window.visible = not debug_window.visible
+	and show_debugger_window_shortcut.matches_event(event)\
+	and (event as InputEventKey).pressed:
+		debug_window.visible = not debug_window.visible
 
 
 ###############################################################################
@@ -426,6 +435,15 @@ func _toggle_element_visibility(element: Node) -> bool:
 		return true
 	element.visible = not element.visible
 	return element.visible
+
+
+func _highlight_addon_file() -> void:
+	var self_path := (get_script() as GDScript).resource_path
+	var rect = file_system_dock_manager.get_file_rect(self_path)
+	if rect.size == Vector2.ZERO:
+		push_error("Could not find %s"%[self_path])
+		return
+	highlights_layer.add_overlay_rectangle(self_path, rect)
 
 
 ###############################################################################

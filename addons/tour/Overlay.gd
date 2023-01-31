@@ -15,3 +15,9 @@ func _init() -> void:
 func fit_control(target_control: Control) -> void:
 	size = target_control.size
 	global_position = target_control.global_position
+
+
+func fit_rectangle(target_rectangle: Rect2) -> void:
+	size = target_rectangle.size
+	global_position = target_rectangle.position
+
