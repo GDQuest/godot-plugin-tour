@@ -313,6 +313,8 @@ const FileSystemManager = preload("FileSystemManager.gd")
 var file_system_dock_manager := FileSystemManager.new()
 
 func _on_ready_setup_file_system_manager() -> void:
+	file_system_dock_manager.name = "FileSystemDockManager"
+	add_child(file_system_dock_manager, true)
 	file_system_dock_manager.file_system_dock = file_system_dock
 	file_system_dock_manager.setup()
 
@@ -438,8 +440,9 @@ func _toggle_element_visibility(element: Node) -> bool:
 
 
 func _highlight_addon_file() -> void:
+	file_system_dock_manager.show_filesystem_dock()
 	var self_path := (get_script() as GDScript).resource_path
-	var rect = file_system_dock_manager.get_file_rect(self_path)
+	var rect = await file_system_dock_manager.get_file_rect(self_path)
 	if rect.size == Vector2.ZERO:
 		push_error("Could not find %s"%[self_path])
 		return

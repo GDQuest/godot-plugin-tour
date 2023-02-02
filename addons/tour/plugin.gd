@@ -1,14 +1,14 @@
 @tool
 extends EditorPlugin
 
-const GPath = preload("GPath.gd")
-var inst: GPath
+const Tour = preload("Tour.gd")
+var tour: Tour
 
 func _ready() -> void:
-	inst = GPath.new()
-	get_editor_interface().add_child(inst)
-	inst.temp_test()
+	tour = Tour.new()
+	get_editor_interface().add_child(tour)
+	tour.temp_test()
 
 
 func _exit_tree() -> void:
-	inst.queue_free()
+	tour.queue_free()

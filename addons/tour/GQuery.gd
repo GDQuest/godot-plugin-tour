@@ -18,8 +18,9 @@ const SKIP := { skip = true }
 ## @param {Node -> bool} the predicate to use
 ## @param max_depth use this to limit the search's depth. Defaults to 40
 ## @param min_depth use this to determine a minimal depth. Defaults to 0 (which includes the root node)
+## @param internal_children if true, will seek hidden children too
 ## @param _current_depth used internally to track the depth. Do not set it
-static func find(target: Node, predicate: Callable, max_depth := 40, min_depth := 0, _current_depth := 0) -> Control:
+static func find(target: Node, predicate: Callable, max_depth := 40, min_depth := 0, internal_children := false, _current_depth := 0) -> Control:
 	if _current_depth > max_depth or target == null:
 		return null
 	if _current_depth >= min_depth:
@@ -28,8 +29,8 @@ static func find(target: Node, predicate: Callable, max_depth := 40, min_depth :
 			return target
 		if result is Dictionary and result == SKIP:
 			return null
-	for child in target.get_children():	
-		var found := find(child, predicate, max_depth, min_depth, _current_depth + 1)
+	for child in target.get_children(internal_children):
+		var found := find(child, predicate, max_depth, min_depth, internal_children, _current_depth + 1)
 		if found != null:
 			return found
 	return null
