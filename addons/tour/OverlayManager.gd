@@ -179,12 +179,15 @@ class OverlayLayer extends Control:
 	##             seconds.
 	## @param delay if this value is above 0 and if `fade` is also above 0, the highlighter
 	##              will fade out and remove the node after `delay` seconds.
-	func fade_in_panel(panel: Overlay, fade_in := 1.0, delay:= 0.0) -> Tween:
+	## @param delay_before if above 0, will wait that time before showing up
+	func fade_in_panel(panel: Overlay, fade_in := 1.0, delay:= 0.0, delay_before := 0.0) -> Tween:
 		if panel and fade_in > 0:
 			var tween := create_tween()\
 				.set_trans(Tween.TRANS_EXPO)\
 				.set_ease(Tween.EASE_IN_OUT)
 			panel.modulate.a = 0
+			if delay_before > 0:
+				tween.tween_interval(delay_before)
 			tween.tween_property(panel, "modulate:a", 1, fade_in)
 			if delay > 0:
 				tween.tween_interval(delay)

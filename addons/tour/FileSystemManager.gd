@@ -29,6 +29,7 @@ var file_system_tabs: TabContainer
 var file_system_tree: Tree
 var search_input: LineEdit
 
+## Creates references to UI elements that we might need
 func _setup_elements_of_interest() -> void:
 	file_system_tabs = GQuery.find_ancestor(file_system_dock, func (node: Node) -> bool: 
 		return node is TabContainer
@@ -45,9 +46,20 @@ func _setup_elements_of_interest() -> void:
 	)
 
 
-func highlight_file(file_path: String) -> void:
-	show_filesystem_dock()
-	file_system_tree.deselect_all()
+###############################################################################
+#
+# HIGHLIGHTS and SELECTION
+#
+
+## Creates a temporary highlight around the file, selects it, 
+## @param file_path a path in the form `res://path/to/file.gd`
+## @param prepare   if true, the dock will be shown, and any previously selected 
+##                  file will be deselected
+## @param scroll_to if true, the file will be scrolled to
+## @param delay_before if above 0, the overlay will wait that time before showing up
+func highlight_file(file_path: String, prepare := true, scroll_to := true, delay_before := 0.0) -> void:
+	if prepare == true:
+		prepare_dock_for_selection()
 	var item := find_file(file_path)
 	if item == null:
 		return
@@ -57,13 +69,51 @@ func highlight_file(file_path: String) -> void:
 		push_error("Could not find %s"%[file_path])
 		return
 	var panel := highlights.add_overlay_rectangle(file_path, rect)
-	highlights.fade_in_panel(panel, 0.3, 0.1)
+	highlights.fade_in_panel(panel, 0.3, 0.1, delay_before)
+	item.set_selectable(0, true)
 	item.select(0)
-	
 
+
+## TODO: DOES NOT WORK
+## Creates a temporary highlight around several files, selects them, 
+## and deselects everything else
+## @param file_paths a set of paths in the form `res://path/to/file.gd`
+## @param prepare    if true, the dock will be shown, and any previously selected 
+##                   file will be deselected
+func highlight_file_set(file_paths: PackedStringArray, prepare := true) -> void:
+	push_warning("This method does not work correctly yet")
+	if prepare == true:
+		prepare_dock_for_selection()
+	for index in file_paths.size():
+		var file_path := file_paths[index]
+		var delay_before := float(index) * 0.1
+		var scroll_to := index == 0
+		await highlight_file(file_path, false, scroll_to, delay_before)
+
+
+## Removes all highlights
 func remove_highlights() -> void:
 	highlights.clean_all_overlays()
 
+
+## Ensures the dock is visible and that all files are deselected
+## Locks all files from manual selection, which means you need to make them
+## selectable yourself
+func prepare_dock_for_selection() -> void:
+	show_filesystem_dock()
+	remove_highlights()
+	file_system_tree.deselect_all()
+	make_tree_unselectable()
+
+
+func make_tree_unselectable() -> void:
+	var root := get_or_find_root()
+	root.call_recursive("set_selectable", 0, false)
+
+
+func make_tree_selectable() -> void:
+	var root := get_or_find_root()
+	root.call_recursive("set_selectable", 0, true)
 
 ###############################################################################
 #
@@ -121,7 +171,7 @@ func get_tree_item_summary(item: TreeItem) -> Dictionary:
 ## Ensures the item has all parents uncollapsed, and item is in view 
 ## Waits two frames, one for all parents to open, and one to ensure the item's
 ## rectangle is available.
-func ensure_visible(item: TreeItem) -> void:
+func ensure_visible(item: TreeItem, scroll_to := true) -> void:
 	if item == null:
 		return
 	var parent := item.get_parent()
@@ -130,7 +180,8 @@ func ensure_visible(item: TreeItem) -> void:
 		parent = parent.get_parent()
 	# rectangles get created in the next frame
 	await get_tree().process_frame
-	file_system_tree.scroll_to_item(item, true)
+	if scroll_to:
+		file_system_tree.scroll_to_item(item, true)
 	await get_tree().process_frame
 
 

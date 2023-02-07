@@ -17,7 +17,12 @@ unique_name_in_owner = true
 layout_mode = 2
 text = "Show Dock"
 
-[node name="HighlightAddonsDirectory" type="Button" parent="HFlowContainer"]
+[node name="HighlightAddonsFile" type="Button" parent="HFlowContainer"]
 unique_name_in_owner = true
 layout_mode = 2
-text = "Highlight Addons"
+text = "Highlight Addon file"
+
+[node name="UnlockTree" type="Button" parent="HFlowContainer"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Unlock Tree"

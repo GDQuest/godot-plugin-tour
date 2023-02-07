@@ -356,6 +356,7 @@ func _on_ready_verify_integrity() -> bool:
 
 	debug_window.file_system_dock.show_dock_requested.connect(file_system_dock_manager.show)
 	debug_window.file_system_dock.highlight_addons_requested.connect(_highlight_addon_file)
+	debug_window.file_system_dock.unlock_tree_requested.connect(file_system_dock_manager.make_tree_selectable)
 
 	debug_window.elements_of_note.remove_highlights_requested.connect(
 		func clean_all_highlights():
