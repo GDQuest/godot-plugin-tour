@@ -332,7 +332,8 @@ func _on_exit_remove_file_system_manager() -> void:
 # For developing this plugin
 #
 
-var debug_helper = preload("DebugHelper.gd").new()
+var debug_helper := preload("DebugHelper.gd").new()
+
 const DebugWindow = preload("DebugWindow.gd")
 var debug_window: DebugWindow
 
@@ -347,52 +348,38 @@ func _on_ready_verify_integrity() -> bool:
 		return true
 
 	debug_window = preload("DebugWindow.tscn").instantiate()
-	debug_window.theme = get_tree().root.theme
 	
 	# This is necessary to access editor icons
 	# TODO: maybe there's a way to access the default theme from children windows?
-	debug_window.close_requested.connect(debug_window.hide)
+	debug_window.theme = get_tree().root.theme
+	
 	add_child(debug_window)
 
-	debug_window.file_system_dock.show_dock_requested.connect(file_system_dock_manager.show)
-	debug_window.file_system_dock.highlight_addons_requested.connect(_highlight_addon_file)
-	debug_window.file_system_dock.unlock_tree_requested.connect(file_system_dock_manager.make_tree_selectable)
+	var file_system_dock := debug_window.file_system_dock
+	var elements_of_note := debug_window.elements_of_note
 
-	debug_window.elements_of_note.remove_highlights_requested.connect(
+	file_system_dock.show_dock_requested.connect(file_system_dock_manager.show)
+	file_system_dock.highlight_addons_requested.connect(
+		func highlight_addon_file() -> void:
+			var self_path := (get_script() as GDScript).resource_path
+			file_system_dock_manager.highlight_file(self_path)
+	)
+	file_system_dock.unlock_tree_requested.connect(file_system_dock_manager.make_tree_selectable)
+
+	elements_of_note.remove_highlights_requested.connect(
 		func clean_all_highlights():
 			overlays.highlights.clean_all_overlays()
 			file_system_dock_manager.remove_highlights()
 	)
-	debug_window.elements_of_note.remove_blocks_requested.connect(overlays.blocks.clean_all_overlays)
-	debug_window.elements_of_note.add_action({
-		name = "block",
-		tooltip = "toggle block",
-		icon_on = "StyleBoxGridVisible",
-		icon_off = "StyleBoxGridInvisible",
-		action = overlays.blocks.toggle_overlay_of_node
-	})
-	debug_window.elements_of_note.add_action({
-		name = "funnel",
-		tooltip = "block everything except this",
-		icon = "AnimationFilter",
-		is_toggle = false,
-		action = overlays.blocks.add_funnel_to_node.bind(_interactables_array)
-	})
-	debug_window.elements_of_note.add_action({
-		name = "highlight",
-		tooltip = "toggle highlight",
-		icon_on = "GuiRadioChecked",
-		icon_off = "GuiRadioUnchecked",
-		action = overlays.highlights.toggle_overlay_of_node
-	})
-	debug_window.elements_of_note.add_action({
-		name = "visible",
-		tooltip = "toggle visibility",
-		icon_on = "GuiVisibilityVisible",
-		icon_off = "GuiVisibilityHidden",
-		action = _toggle_element_visibility
-	})
+	elements_of_note.remove_blocks_requested.connect(overlays.blocks.clean_all_overlays)
 
+	elements_of_note.on_element_block_toggle_requested = overlays.blocks.toggle_overlay_of_node
+	elements_of_note.on_element_funnel_requested = overlays.blocks.add_funnel_to_node.bind(_interactables_array)
+	elements_of_note.on_element_highlight_toggle_requested = overlays.highlights.toggle_overlay_of_node
+	elements_of_note.on_element_visible_toggle_requested = toggle_element_visibility
+	
+	elements_of_note.setup_actions()
+	
 	var all_found := true
 	for key in _elements:
 		var element: Node = _elements[key]
@@ -418,9 +405,11 @@ func _input(event: InputEvent) -> void:
 
 var overlays := preload("OverlayManager.gd").new()
 
+
 ## Add the overlay layers
 func _on_ready_add_overlays_layer() -> void:
 	get_tree().root.call_deferred("add_child", overlays)
+
 
 ## Remove the overlay layers
 func _on_exit_remove_overlays_layer() -> void:
@@ -429,16 +418,11 @@ func _on_exit_remove_overlays_layer() -> void:
 
 ## Toggles an element from visible to invisible.
 ## Returns a boolean that represents if the element is visible or invisible
-func _toggle_element_visibility(element: Node) -> bool:
+func toggle_element_visibility(element: Node) -> bool:
 	if not ('visible' in element):
 		return true
 	element.visible = not element.visible
 	return element.visible
-
-
-func _highlight_addon_file() -> void:
-	var self_path := (get_script() as GDScript).resource_path
-	file_system_dock_manager.highlight_file(self_path)
 
 
 ###############################################################################
@@ -456,9 +440,3 @@ func _ready() -> void:
 func _exit_tree() -> void:
 	_on_exit_remove_overlays_layer()
 	_on_exit_remove_file_system_manager()
-
-
-func temp_test():
-	#clean_overlays()
-	#add_overlays_block_all_except(runner_buttons)
-	pass

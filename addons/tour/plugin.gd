@@ -7,7 +7,6 @@ var tour: Tour
 func _ready() -> void:
 	tour = Tour.new()
 	get_editor_interface().add_child(tour)
-	tour.temp_test()
 
 
 func _exit_tree() -> void:

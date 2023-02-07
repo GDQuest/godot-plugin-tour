@@ -7,12 +7,52 @@ const ROW_BUTTON_DISABLE = 1000
 signal remove_highlights_requested
 signal remove_blocks_requested
 
+# We're not using signals because we need the return value
+var on_element_block_toggle_requested: Callable
+var on_element_visible_toggle_requested: Callable
+var on_element_highlight_toggle_requested: Callable
+var on_element_funnel_requested: Callable
+
+
 @onready var _elements_tree: Tree = %Tree
 @onready var _remove_all_highlights_button: Button = %RemoveAllHighlights
 @onready var _remove_all_blocks_button: Button = %RemoveAllBlocks
 
 var _actions: Array[RowAction] = []
 var _tree_root: TreeItem
+
+
+## Creates the side actionable buttons
+## This needs to happen after `theme` has been set
+func setup_actions() -> void:
+	add_action({
+		name = "block",
+		tooltip = "toggle block",
+		icon_on = "StyleBoxGridVisible",
+		icon_off = "StyleBoxGridInvisible",
+		action = on_element_block_toggle_requested,
+	})
+	add_action({
+		name = "funnel",
+		tooltip = "block everything except this",
+		icon = "AnimationFilter",
+		is_toggle = false,
+		action = on_element_funnel_requested
+	})
+	add_action({
+		name = "highlight",
+		tooltip = "toggle highlight",
+		icon_on = "GuiRadioChecked",
+		icon_off = "GuiRadioUnchecked",
+		action = on_element_highlight_toggle_requested
+	})
+	add_action({
+		name = "visible",
+		tooltip = "toggle visibility",
+		icon_on = "GuiVisibilityVisible",
+		icon_off = "GuiVisibilityHidden",
+		action = on_element_visible_toggle_requested,
+	})
 
 
 func _ready() -> void:

@@ -8,10 +8,11 @@ extends Control
 const Overlay = preload("Overlay.gd")
 const GQuery = preload("GQuery.gd")
 
+var debug_helper := preload("DebugHelper.gd").new()
+
 ## Will hold all overlays
 var highlights := create_highlights_layer()
-var blocks := create_blocks_layer()
-
+var blocks := create_blocks_layer(debug_helper.is_debug_mode)
 
 ## Add the overlay layers
 func _init() -> void:
@@ -22,10 +23,12 @@ func _init() -> void:
 
 ## Factory function. Is abstracted because it can be used independently
 ## Returns an OverlayLayer with the "block" style box set (stops mouse)
-static func create_blocks_layer() -> OverlayLayer:
+static func create_blocks_layer(is_debug_mode: bool) -> OverlayLayer:
 	var blocks := OverlayLayer.new()
 	blocks.overlay_mouse_filter = Control.MOUSE_FILTER_STOP
-	blocks.overlay_style_box = preload("style_box_block.tres")
+	var style_box := preload("style_box_block.tres")
+	style_box.bg_color.a = 0.8 if is_debug_mode else 0.0
+	blocks.overlay_style_box = style_box
 	maximize(blocks)
 	return blocks
 

@@ -35,6 +35,7 @@ const FileSystemDockDebugScreen = preload("FileSystemDockDebugScreen.gd")
 
 
 func _ready() -> void:
+	close_requested.connect(hide)
 	if theme != null:
 		editor_icons.populate_icons(theme)
 	tab_container.tab_changed.connect(_on_tab_changed)
