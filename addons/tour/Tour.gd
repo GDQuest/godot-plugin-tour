@@ -309,14 +309,20 @@ var show_debugger_window_shortcut := Settings.get_show_debugger_window_shortcut(
 # ANIMATION HELPERS
 #
 
+
 const FileSystemManager = preload("FileSystemManager.gd")
 var file_system_dock_manager := FileSystemManager.new()
+
 
 func _on_ready_setup_file_system_manager() -> void:
 	file_system_dock_manager.name = "FileSystemDockManager"
 	add_child(file_system_dock_manager, true)
 	file_system_dock_manager.file_system_dock = file_system_dock
 	file_system_dock_manager.setup()
+
+
+func _on_exit_remove_file_system_manager() -> void:
+	file_system_dock_manager.queue_free()
 
 
 ###############################################################################
@@ -351,28 +357,32 @@ func _on_ready_verify_integrity() -> bool:
 	debug_window.file_system_dock.show_dock_requested.connect(file_system_dock_manager.show)
 	debug_window.file_system_dock.highlight_addons_requested.connect(_highlight_addon_file)
 
-	debug_window.elements_of_note.remove_highlights_requested.connect(highlights_layer.clean_all_overlays)
-	debug_window.elements_of_note.remove_blocks_requested.connect(blocks_layer.clean_all_overlays)
+	debug_window.elements_of_note.remove_highlights_requested.connect(
+		func clean_all_highlights():
+			overlays.highlights.clean_all_overlays()
+			file_system_dock_manager.remove_highlights()
+	)
+	debug_window.elements_of_note.remove_blocks_requested.connect(overlays.blocks.clean_all_overlays)
 	debug_window.elements_of_note.add_action({
 		name = "block",
 		tooltip = "toggle block",
 		icon_on = "StyleBoxGridVisible",
 		icon_off = "StyleBoxGridInvisible",
-		action = blocks_layer.toggle_overlay_of_node
+		action = overlays.blocks.toggle_overlay_of_node
 	})
 	debug_window.elements_of_note.add_action({
 		name = "funnel",
 		tooltip = "block everything except this",
 		icon = "AnimationFilter",
 		is_toggle = false,
-		action = blocks_layer.add_funnel_to_node.bind(_interactables_array)
+		action = overlays.blocks.add_funnel_to_node.bind(_interactables_array)
 	})
 	debug_window.elements_of_note.add_action({
 		name = "highlight",
 		tooltip = "toggle highlight",
 		icon_on = "GuiRadioChecked",
 		icon_off = "GuiRadioUnchecked",
-		action = highlights_layer.toggle_overlay_of_node
+		action = overlays.highlights.toggle_overlay_of_node
 	})
 	debug_window.elements_of_note.add_action({
 		name = "visible",
@@ -405,29 +415,15 @@ func _input(event: InputEvent) -> void:
 # OVERLAYS
 #
 
-const OverlayManager = preload("OverlayManager.gd")
-
-## Will hold all overlays
-var highlights_layer := OverlayManager.new()
-var blocks_layer := OverlayManager.new()
-
+var overlays := preload("OverlayManager.gd").new()
 
 ## Add the overlay layers
-## TODO: make sure the overlay is always on top?
 func _on_ready_add_overlays_layer() -> void:
-	highlights_layer.overlay_mouse_filter = Control.MOUSE_FILTER_IGNORE
-	highlights_layer.overlay_style_box =preload("style_box_highlight.tres")
-	editor_root.add_child(highlights_layer)
-	
-	blocks_layer.overlay_mouse_filter = Control.MOUSE_FILTER_STOP
-	blocks_layer.overlay_style_box = preload("style_box_block.tres")
-	editor_root.add_child(blocks_layer)
+	get_tree().root.call_deferred("add_child", overlays)
 
-
-# Remove the overlay layers
+## Remove the overlay layers
 func _on_exit_remove_overlays_layer() -> void:
-	highlights_layer.queue_free()
-	blocks_layer.queue_free()
+	overlays.queue_free()
 
 
 ## Toggles an element from visible to invisible.
@@ -440,13 +436,8 @@ func _toggle_element_visibility(element: Node) -> bool:
 
 
 func _highlight_addon_file() -> void:
-	file_system_dock_manager.show_filesystem_dock()
 	var self_path := (get_script() as GDScript).resource_path
-	var rect = await file_system_dock_manager.get_file_rect(self_path)
-	if rect.size == Vector2.ZERO:
-		push_error("Could not find %s"%[self_path])
-		return
-	highlights_layer.add_overlay_rectangle(self_path, rect)
+	file_system_dock_manager.highlight_file(self_path)
 
 
 ###############################################################################
@@ -463,6 +454,7 @@ func _ready() -> void:
 
 func _exit_tree() -> void:
 	_on_exit_remove_overlays_layer()
+	_on_exit_remove_file_system_manager()
 
 
 func temp_test():

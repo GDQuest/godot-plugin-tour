@@ -9,31 +9,15 @@ extends Control
 
 const GQuery = preload("GQuery.gd")
 
-
 ###############################################################################
 #
-# SCROLL TRACKING
+# OVERLAYS
 #
 
-var hscrollbar: HScrollBar
-var vscrollbar: VScrollBar
+var highlights := preload("OverlayManager.gd").create_highlights_layer()
 
-# Result of scroll
-var pane_position := Vector2.ZERO
-
-func _setup_scrolling_handlers() -> void:
-	# TODO: doesn't work with either value_changed or scrolling
-	hscrollbar.scrolling.connect(_on_scrollbar_scroll.bind(hscrollbar, vscrollbar))
-	vscrollbar.scrolling.connect(_on_scrollbar_scroll.bind(hscrollbar, vscrollbar))
-
-
-func _on_scrollbar_scroll(hscroll: HScrollBar, vscroll: VScrollBar) -> void:
-	print("sdsffs")
-	var x := hscroll.value
-	var y := vscroll.value
-	if x != pane_position.x or y != pane_position.y:
-		pane_position = Vector2(x, y)
-	print(pane_position)
+func _on_ready_add_overlay() -> void:
+	file_system_tree.add_child(highlights)
 
 ###############################################################################
 #
@@ -59,13 +43,26 @@ func _setup_elements_of_interest() -> void:
 		and node.get_parent() is HBoxContainer \
 		and node.get_parent().get_parent() is VBoxContainer
 	)
+
+
+func highlight_file(file_path: String) -> void:
+	show_filesystem_dock()
+	file_system_tree.deselect_all()
+	var item := find_file(file_path)
+	if item == null:
+		return
+	await ensure_visible(item)
+	var rect := get_item_rect(item, false)
+	if rect.size == Vector2.ZERO:
+		push_error("Could not find %s"%[file_path])
+		return
+	var panel := highlights.add_overlay_rectangle(file_path, rect)
+	highlights.fade_in_panel(panel, 0.3, 0.1)
+	item.select(0)
 	
-	hscrollbar = GQuery.find(file_system_tree, func (node: Node) -> bool: 
-		return node is HScrollBar
-	, 100, 1, true)
-	vscrollbar = GQuery.find(file_system_tree, func (node: Node) -> bool: 
-		return node is VScrollBar
-	, 100, 1, true)
+
+func remove_highlights() -> void:
+	highlights.clean_all_overlays()
 
 
 ###############################################################################
@@ -78,7 +75,7 @@ var root: TreeItem
 
 ## Finds the core file node in the filesystem dock
 func get_or_find_root(refresh := false) -> TreeItem:
-	if root == null or refresh == true:
+	if root == null or not is_instance_valid(root) or refresh == true:
 		root = find_item_by_predicate(
 			file_system_tree.get_root(), 
 			func (item: TreeItem) -> bool: 
@@ -121,36 +118,33 @@ func get_tree_item_summary(item: TreeItem) -> Dictionary:
 	}
 
 
-## Returns the rectangle the encloses a file in the FileSystem dock file tree. 
-## This *only* works for the file tree and makes assumptions that a regular Tree
-## will not fullfill.
-func get_file_rect(file_path: String, global := true) -> Rect2:
-	var file := find_file(file_path)
-	if file == null:
-		return Rect2()
-	var parent := file.get_parent()
+## Ensures the item has all parents uncollapsed, and item is in view 
+## Waits two frames, one for all parents to open, and one to ensure the item's
+## rectangle is available.
+func ensure_visible(item: TreeItem) -> void:
+	if item == null:
+		return
+	var parent := item.get_parent()
 	while parent != null:
 		parent.collapsed = false
 		parent = parent.get_parent()
 	# rectangles get created in the next frame
 	await get_tree().process_frame
-	file_system_tree.scroll_to_item(file)
+	file_system_tree.scroll_to_item(item, true)
 	await get_tree().process_frame
-	var rect := get_item_rect(file)
-	if global:
-		rect.position += file_system_tree.global_position
-		## TODO: add scroll and remove masked parts
-	return rect
 
 
 ## Returns the rectangle the encloses a file in the FileSystem dock file tree. 
 ## This *only* works for the file tree and makes assumptions that a regular Tree
 ## will not fullfill.
 ## This function requires the item to be visible and expanded
-func get_item_rect(item: TreeItem) -> Rect2:
+func get_item_rect(item: TreeItem, global := false) -> Rect2:
 	if item == null:
 		return Rect2()
-	return item.get_meta("__focus_rect") as Rect2
+	var rect := item.get_meta("__focus_rect") as Rect2
+	if global:
+		rect.position += file_system_tree.global_position
+	return rect
 
 
 ## Finds a file TreeItem in the file tree. Pass a path in the format
@@ -199,11 +193,19 @@ static func find_item_by_predicate(target: TreeItem, predicate: Callable, max_de
 			return found
 	return null
 
+
 ###############################################################################
 #
 # BOOSTRAP
 #
 
+
 func setup() -> void:
 	_setup_elements_of_interest()
-	_setup_scrolling_handlers()
+	_on_ready_add_overlay()
+
+
+func _exit_tree() -> void:
+	if highlights.is_inside_tree():
+		file_system_tree.remove_child(highlights)
+	highlights.queue_free()
