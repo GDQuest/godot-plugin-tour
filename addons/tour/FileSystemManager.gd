@@ -63,7 +63,7 @@ func highlight_file(file_path: String, prepare := true, scroll_to := true, delay
 	var item := find_file(file_path)
 	if item == null:
 		return
-	await ensure_visible(item)
+	await ensure_visible(item, scroll_to)
 	var rect := get_item_rect(item, false)
 	if rect.size == Vector2.ZERO:
 		push_error("Could not find %s"%[file_path])
