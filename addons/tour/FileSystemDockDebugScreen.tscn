@@ -20,7 +20,7 @@ text = "Show Dock"
 [node name="HighlightAddonsFile" type="Button" parent="HFlowContainer"]
 unique_name_in_owner = true
 layout_mode = 2
-text = "Highlight Addon file"
+text = "Fade In Addon file"
 
 [node name="UnlockTree" type="Button" parent="HFlowContainer"]
 unique_name_in_owner = true

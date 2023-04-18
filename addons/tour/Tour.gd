@@ -302,7 +302,7 @@ var show_debugger_window_shortcut := Settings.get_show_debugger_window_shortcut(
 	history_dock = history_dock, 
 }
 
-@onready var _interactables_array: Array[Node] = _interactables.values()
+@onready var _interactables_array: Array[Node]
 
 ###############################################################################
 #
@@ -362,7 +362,7 @@ func _on_ready_verify_integrity() -> bool:
 	file_system_dock.highlight_addons_requested.connect(
 		func highlight_addon_file() -> void:
 			var self_path := (get_script() as GDScript).resource_path
-			file_system_dock_manager.highlight_file(self_path)
+			file_system_dock_manager.fade_in_file(self_path)
 	)
 	file_system_dock.unlock_tree_requested.connect(file_system_dock_manager.make_tree_selectable)
 
@@ -432,6 +432,8 @@ func toggle_element_visibility(element: Node) -> bool:
 
 
 func _ready() -> void:
+	_interactables_array.assign(_interactables.values())
+
 	_on_ready_add_overlays_layer()
 	_on_ready_verify_integrity()
 	_on_ready_setup_file_system_manager()

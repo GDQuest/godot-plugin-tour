@@ -61,7 +61,6 @@ static func maximize(control: Control) -> void:
 ## Requires: styleboxes
 ##
 class OverlayLayer extends Control:
-	
 	## Will hold all overlays
 	## @type Dictionary[Node|String, Overlay]
 	var _overlays_cache := {}
@@ -74,6 +73,7 @@ class OverlayLayer extends Control:
 
 	func _ready() -> void:
 		assert(overlay_style_box != null, "there's no style box, overlays cannot be drawn")
+
 
 	## Creates an overlay using the set stylebox
 	## Never creates the same overlay twice. If an overlay for the given key already
@@ -108,7 +108,6 @@ class OverlayLayer extends Control:
 			return null
 		var panel := dispense_overlay(node, control.get_global_rect())
 		return panel
-
 
 
 	func add_overlay_rectangle(rect_name: String, rectangle: Rect2) -> Overlay:

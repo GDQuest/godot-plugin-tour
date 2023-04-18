@@ -57,7 +57,7 @@ func _setup_elements_of_interest() -> void:
 ##                  file will be deselected
 ## @param scroll_to if true, the file will be scrolled to
 ## @param delay_before if above 0, the overlay will wait that time before showing up
-func highlight_file(file_path: String, prepare := true, scroll_to := true, delay_before := 0.0) -> void:
+func fade_in_file(file_path: String, prepare := true, scroll_to := true, delay_before := 0.0) -> void:
 	if prepare == true:
 		prepare_dock_for_selection()
 	var item := find_file(file_path)
@@ -72,6 +72,28 @@ func highlight_file(file_path: String, prepare := true, scroll_to := true, delay
 	highlights.fade_in_panel(panel, 0.3, 0.1, delay_before)
 	item.set_selectable(0, true)
 	item.select(0)
+
+
+func highlight_file(file_path: String, prepare := true, scroll_to := true, delay_before := 0.0) -> void:
+	if prepare == true:
+		prepare_dock_for_selection()
+	var item := find_file(file_path)
+	if item == null:
+		return
+	# force "__focus_rect" update by selecting the item first
+	item.set_selectable(0, true)
+	item.select(0)
+	await ensure_visible(item, scroll_to)
+	var rect := get_item_rect(item, false)
+	if rect.size == Vector2.ZERO:
+		push_error("Could not find %s"%[file_path])
+		return
+	var panel := highlights.add_overlay_rectangle(file_path, rect)
+	item.select(0)
+
+
+func remove_file_highlight(file_path: String) -> void:
+	highlights.clean_overlays_of(file_path)
 
 
 ## TODO: DOES NOT WORK
@@ -109,11 +131,20 @@ func prepare_dock_for_selection() -> void:
 func make_tree_unselectable() -> void:
 	var root := get_or_find_root()
 	root.call_recursive("set_selectable", 0, false)
+	root.call_recursive("set_disable_folding", true)
+	
+	# TODO: Fix item_activated triggering selection
+#	file_system_tree.item_activated.connect(
+#		func():
+#			file_system_tree.deselect_all()
+#			make_tree_unselectable()
+#	, CONNECT_ONE_SHOT)
 
 
 func make_tree_selectable() -> void:
 	var root := get_or_find_root()
 	root.call_recursive("set_selectable", 0, true)
+	root.call_recursive("set_disable_folding", false)
 
 ###############################################################################
 #
@@ -192,6 +223,7 @@ func ensure_visible(item: TreeItem, scroll_to := true) -> void:
 func get_item_rect(item: TreeItem, global := false) -> Rect2:
 	if item == null:
 		return Rect2()
+	
 	var rect := item.get_meta("__focus_rect") as Rect2
 	if global:
 		rect.position += file_system_tree.global_position

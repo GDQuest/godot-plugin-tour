@@ -9,7 +9,6 @@
 initial_position = 1
 title = "Debug Window"
 size = Vector2i(500, 300)
-current_screen = -2
 wrap_controls = true
 transient = true
 script = ExtResource("1_mowqe")
@@ -24,6 +23,7 @@ size_flags_horizontal = 3
 size_flags_vertical = 3
 
 [node name="EditorIcons" type="ScrollContainer" parent="TabContainer"]
+visible = false
 layout_mode = 2
 
 [node name="MarginContainer" type="MarginContainer" parent="TabContainer/EditorIcons"]
@@ -41,7 +41,6 @@ unique_name_in_owner = true
 layout_mode = 2
 
 [node name="File System" type="ScrollContainer" parent="TabContainer"]
-visible = false
 layout_mode = 2
 
 [node name="MarginContainer" type="MarginContainer" parent="TabContainer/File System"]
