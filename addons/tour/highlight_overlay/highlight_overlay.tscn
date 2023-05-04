@@ -1,0 +1,81 @@
+[gd_scene load_steps=6 format=3 uid="uid://corbypjwywei7"]
+
+[ext_resource type="Script" path="res://addons/tour/highlight_overlay/highlight_overlay.gd" id="1_eo4ax"]
+[ext_resource type="StyleBox" uid="uid://yhcqrnstbm8b" path="res://addons/tour/style_box_highlight.tres" id="2_4ypcf"]
+[ext_resource type="Shader" path="res://addons/tour/highlight_overlay/darken.gdshader" id="2_h6ei8"]
+
+[sub_resource type="ViewportTexture" id="ViewportTexture_tnf6e"]
+viewport_path = NodePath("SubViewportContainer/SubViewport")
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_imuc7"]
+resource_local_to_scene = true
+shader = ExtResource("2_h6ei8")
+shader_parameter/zones_sampler = SubResource("ViewportTexture_tnf6e")
+
+[node name="HighlightOverlay" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+script = ExtResource("1_eo4ax")
+outline_style_box = ExtResource("2_4ypcf")
+
+[node name="SubViewportContainer" type="SubViewportContainer" parent="."]
+light_mask = 0
+visibility_layer = 0
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+stretch = true
+metadata/_edit_lock_ = true
+
+[node name="SubViewport" type="SubViewport" parent="SubViewportContainer"]
+disable_3d = true
+handle_input_locally = false
+size = Vector2i(1152, 648)
+size_2d_override_stretch = true
+render_target_update_mode = 4
+
+[node name="BG" type="ColorRect" parent="SubViewportContainer/SubViewport"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="RectsHolder" type="Control" parent="SubViewportContainer/SubViewport"]
+unique_name_in_owner = true
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="DarkZone" type="ColorRect" parent="."]
+unique_name_in_owner = true
+material = SubResource("ShaderMaterial_imuc7")
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(0, 0, 0, 0)
+metadata/_edit_lock_ = true
+
+[node name="OutlineContainer" type="Control" parent="."]
+unique_name_in_owner = true
+anchors_preset = 0
+offset_right = 40.0
+offset_bottom = 40.0

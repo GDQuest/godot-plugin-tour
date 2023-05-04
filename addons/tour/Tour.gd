@@ -338,6 +338,18 @@ const DebugWindow = preload("DebugWindow.gd")
 var debug_window: DebugWindow
 
 
+# print a string only in debug mode
+func print_in_debug(str: String) -> void:
+	if debug_helper.is_debug_mode:
+		print(str)
+
+
+# printerr a string only in debug mode
+func printerr_in_debug(str: String) -> void:
+	if debug_helper.is_debug_mode:
+		printerr(str)
+
+
 ## Checks that all the basic elements are there
 func _on_ready_verify_integrity() -> bool:
 	if not Engine.is_editor_hint():
@@ -400,6 +412,22 @@ func _input(event: InputEvent) -> void:
 
 ###############################################################################
 #
+# HIGHLIGHT OVERLAY
+#
+
+var highlight_overlay := preload("res://addons/tour/highlight_overlay/highlight_overlay.tscn").instantiate()
+
+
+func _on_ready_add_highlight_overlay() -> void:
+	get_tree().root.call_deferred("add_child", highlight_overlay)
+
+
+func _on_exit_remove_highlight_overlay() -> void:
+	highlight_overlay.queue_free()
+
+
+###############################################################################
+#
 # OVERLAYS
 #
 
@@ -434,6 +462,7 @@ func toggle_element_visibility(element: Node) -> bool:
 func _ready() -> void:
 	_interactables_array.assign(_interactables.values())
 
+	_on_ready_add_highlight_overlay()
 	_on_ready_add_overlays_layer()
 	_on_ready_verify_integrity()
 	_on_ready_setup_file_system_manager()
@@ -442,3 +471,4 @@ func _ready() -> void:
 func _exit_tree() -> void:
 	_on_exit_remove_overlays_layer()
 	_on_exit_remove_file_system_manager()
+	_on_exit_remove_highlight_overlay()
